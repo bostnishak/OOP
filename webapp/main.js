@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const consoleText = document.getElementById('consoleText');
 
     let currentModule = null;
+    let currentQuizIndex = 0;
+    let quizScore = 0;
+    let isQuizAnswered = false;
 
     // Initialize Menu
     function initMenu() {
@@ -25,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="nav-details">
                     <span class="nav-title">${module.title}</span>
                     <div class="progress-track">
-                        <div class="progress-fill" style="width: ${Math.random() * 50 + 20}%"></div>
+                        <div class="progress-fill" style="width: ${Math.random() * 30 + 10}%"></div>
                     </div>
                 </div>
             `;
@@ -54,92 +57,152 @@ document.addEventListener('DOMContentLoaded', () => {
         textContent.innerHTML = module.content;
         
         // 2. UML Diagram
-        umlContent.innerHTML = `<div class="mermaid">${module.uml}</div>`;
-        // Re-render mermaid
-        try {
-            await window.mermaid.run({
-                querySelector: '.mermaid'
-            });
-        } catch(e) {
-            console.error("Mermaid parsing error", e);
+        if (module.uml) {
+            umlContent.innerHTML = `<div class="mermaid">${module.uml}</div>`;
+            try {
+                await window.mermaid.run({ querySelector: '.mermaid' });
+            } catch(e) { console.error("Mermaid error", e); }
+        } else {
+            umlContent.innerHTML = '';
         }
 
         // 3. Code Editor
-        codeEditor.textContent = module.code;
-        // Re-render syntax highlighting
-        Prism.highlightElement(codeEditor);
+        if (module.code) {
+            codeEditor.textContent = module.code;
+            Prism.highlightElement(codeEditor);
+        } else {
+            codeEditor.textContent = '// Bu bölüm için örnek kod bulunmuyor.';
+        }
         
-        // Hide console if open
         consoleOutput.classList.add('hidden');
 
         // 4. Quiz
-        renderQuiz(module.quiz);
+        currentQuizIndex = 0;
+        quizScore = 0;
+        renderQuiz();
     }
 
-    // Render Quiz
-    function renderQuiz(quiz) {
-        if(!quiz) {
-            quizContainer.innerHTML = '<p>No quiz for this module.</p>';
+    // Render Quiz Engine
+    function renderQuiz() {
+        if(!currentModule.quizzes || currentModule.quizzes.length === 0) {
+            quizContainer.innerHTML = '<p>Bu bölüm için test bulunmuyor.</p>';
             return;
         }
 
+        if (currentQuizIndex >= currentModule.quizzes.length) {
+            // Sınav bitti
+            quizContainer.innerHTML = `
+                <div class="quiz-result-screen">
+                    <i class="fa-solid fa-trophy" style="font-size: 3rem; color: #f1c40f; margin-bottom: 20px;"></i>
+                    <h3>TEST TAMAMLANDI!</h3>
+                    <p>Puanınız: <strong style="color: var(--neon-cyan); font-size: 1.2rem;">${quizScore} / ${currentModule.quizzes.length}</strong></p>
+                    <button class="submit-btn" id="restartQuiz" style="margin-top: 20px;">TESTİ TEKRAR ÇÖZ</button>
+                </div>
+            `;
+            document.getElementById('restartQuiz').addEventListener('click', () => {
+                currentQuizIndex = 0;
+                quizScore = 0;
+                renderQuiz();
+            });
+            return;
+        }
+
+        isQuizAnswered = false;
+        const quiz = currentModule.quizzes[currentQuizIndex];
+        
         let optionsHtml = quiz.options.map((opt, i) => `
-            <label class="option-label">
+            <label class="option-label" id="label-${i}">
                 <input type="radio" name="quizOption" value="${i}">
                 <span>${opt}</span>
             </label>
         `).join('');
 
         quizContainer.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.8rem; color: var(--text-muted);">
+                <span>Soru ${currentQuizIndex + 1} / ${currentModule.quizzes.length}</span>
+                <span>Puan: ${quizScore}</span>
+            </div>
             <p class="question-text">${quiz.question}</p>
             <div class="options">
                 ${optionsHtml}
             </div>
-            <button class="submit-btn" id="submitQuiz">SUBMIT ANSWER</button>
+            <button class="submit-btn" id="submitQuiz">CEVAPLA</button>
             <div class="quiz-feedback" id="quizFeedback"></div>
         `;
 
-        document.getElementById('submitQuiz').addEventListener('click', () => {
+        const submitBtn = document.getElementById('submitQuiz');
+        submitBtn.addEventListener('click', () => {
+            if(isQuizAnswered) {
+                // Next Question eylemi
+                currentQuizIndex++;
+                renderQuiz();
+                return;
+            }
+
             const selected = document.querySelector('input[name="quizOption"]:checked');
             const feedback = document.getElementById('quizFeedback');
             
             if(!selected) {
-                feedback.textContent = 'Please select an answer.';
-                feedback.className = 'quiz-feedback feedback-error';
+                feedback.innerHTML = '<span style="color: #ffcc00;"><i class="fa-solid fa-triangle-exclamation"></i> Lütfen bir şık seçin.</span>';
                 return;
             }
 
-            if(parseInt(selected.value) === quiz.correct) {
-                feedback.textContent = 'Correct! Excellent job.';
-                feedback.className = 'quiz-feedback feedback-success';
+            isQuizAnswered = true;
+            const selectedVal = parseInt(selected.value);
+            const isCorrect = (selectedVal === quiz.correctIndex);
+            
+            // Tüm inputları disable yap
+            document.querySelectorAll('input[name="quizOption"]').forEach(input => input.disabled = true);
+
+            // Doğru şıkkı yeşil yap
+            document.getElementById(`label-${quiz.correctIndex}`).style.color = '#a8ff60';
+            
+            if(isCorrect) {
+                quizScore++;
+                feedback.innerHTML = `
+                    <div class="explanation-box success">
+                        <strong><i class="fa-solid fa-check-circle"></i> Doğru Cevap!</strong><br><br>
+                        ${quiz.explanation}
+                    </div>
+                `;
             } else {
-                feedback.textContent = 'Incorrect. Try again!';
-                feedback.className = 'quiz-feedback feedback-error';
+                // Yanlış şıkkı kırmızı yap
+                document.getElementById(`label-${selectedVal}`).style.color = '#ff5555';
+                feedback.innerHTML = `
+                    <div class="explanation-box error">
+                        <strong><i class="fa-solid fa-circle-xmark"></i> Yanlış Cevap.</strong><br><br>
+                        <em>Açıklama:</em> ${quiz.explanation}
+                    </div>
+                `;
             }
+
+            submitBtn.innerHTML = 'SIRADAKİ SORU <i class="fa-solid fa-arrow-right"></i>';
+            submitBtn.style.background = 'var(--neon-cyan)';
+            submitBtn.style.color = '#000';
+            submitBtn.style.boxShadow = '0 0 15px var(--neon-cyan-dim)';
         });
     }
 
     // Run Code Simulation
     runBtn.addEventListener('click', () => {
         consoleOutput.classList.remove('hidden');
-        consoleText.textContent = 'Compiling Java code...\\n';
+        consoleText.textContent = 'Kod Derleniyor...\\n';
         
         setTimeout(() => {
             const code = codeEditor.textContent;
             if(code.includes('System.out.println')) {
-                // Extract println content roughly
                 const regex = /System\\.out\\.println\\(["'](.*?)["']\\)/g;
                 let match;
                 let output = '';
                 while ((match = regex.exec(code)) !== null) {
                     output += match[1] + '\\n';
                 }
-                if(output === '') output = 'Output executed.\\n';
-                consoleText.textContent += '\\n[SUCCESS] Output:\\n' + output;
+                if(output === '') output = 'Kod çalıştı.\\n';
+                consoleText.textContent += '\\n[BAŞARILI] Konsol Çıktısı:\\n' + output;
             } else {
-                consoleText.textContent += '\\n[SUCCESS] Code compiled successfully, but no console output was generated.';
+                consoleText.textContent += '\\n[BİLGİ] Kod başarıyla derlendi ancak konsola herhangi bir şey yazdırılmadı.\\nSystem.out.println() kullanmayı deneyin.';
             }
-        }, 600);
+        }, 500);
     });
 
     closeConsole.addEventListener('click', () => {
