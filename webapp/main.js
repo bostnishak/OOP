@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isQuizAnswered = false;
         const quiz = currentModule.quizzes[currentQuizIndex];
         
-        let optionsHtml = quiz.options.map((opt, i) => `
+        let optionsHtml = quiz.o.map((opt, i) => `
             <label class="option-label" id="label-${i}">
                 <input type="radio" name="quizOption" value="${i}">
                 <span>${opt}</span>
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>Soru ${currentQuizIndex + 1} / ${currentModule.quizzes.length}</span>
                 <span>Puan: ${quizScore}</span>
             </div>
-            <p class="question-text">${quiz.question}</p>
+            <p class="question-text">${quiz.q}</p>
             <div class="options">
                 ${optionsHtml}
             </div>
@@ -149,20 +149,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             isQuizAnswered = true;
             const selectedVal = parseInt(selected.value);
-            const isCorrect = (selectedVal === quiz.correctIndex);
+            const isCorrect = (selectedVal === quiz.c);
             
             // Tüm inputları disable yap
             document.querySelectorAll('input[name="quizOption"]').forEach(input => input.disabled = true);
 
             // Doğru şıkkı yeşil yap
-            document.getElementById(`label-${quiz.correctIndex}`).style.color = '#a8ff60';
+            document.getElementById(`label-${quiz.c}`).style.color = '#a8ff60';
             
             if(isCorrect) {
                 quizScore++;
                 feedback.innerHTML = `
                     <div class="explanation-box success">
                         <strong><i class="fa-solid fa-check-circle"></i> Doğru Cevap!</strong><br><br>
-                        ${quiz.explanation}
+                        ${quiz.e}
                     </div>
                 `;
             } else {
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 feedback.innerHTML = `
                     <div class="explanation-box error">
                         <strong><i class="fa-solid fa-circle-xmark"></i> Yanlış Cevap.</strong><br><br>
-                        <em>Açıklama:</em> ${quiz.explanation}
+                        <em>Açıklama:</em> ${quiz.e}
                     </div>
                 `;
             }
@@ -186,21 +186,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Run Code Simulation
     runBtn.addEventListener('click', () => {
         consoleOutput.classList.remove('hidden');
-        consoleText.textContent = 'Kod Derleniyor...\\n';
+        consoleText.textContent = 'Kod Derleniyor...\n';
         
         setTimeout(() => {
-            const code = codeEditor.textContent;
-            if(code.includes('System.out.println')) {
-                const regex = /System\\.out\\.println\\(["'](.*?)["']\\)/g;
-                let match;
-                let output = '';
-                while ((match = regex.exec(code)) !== null) {
-                    output += match[1] + '\\n';
-                }
-                if(output === '') output = 'Kod çalıştı.\\n';
-                consoleText.textContent += '\\n[BAŞARILI] Konsol Çıktısı:\\n' + output;
+            if (currentModule.expectedOutput) {
+                consoleText.textContent += '\n[BAŞARILI] Konsol Çıktısı:\n' + currentModule.expectedOutput;
             } else {
-                consoleText.textContent += '\\n[BİLGİ] Kod başarıyla derlendi ancak konsola herhangi bir şey yazdırılmadı.\\nSystem.out.println() kullanmayı deneyin.';
+                consoleText.textContent += '\n[BİLGİ] Kod başarıyla derlendi ancak konsola herhangi bir şey yazdırılmadı.\nSystem.out.println() kullanmayı deneyin.';
             }
         }, 500);
     });
