@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOP in JAVA</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <!-- PrismJS for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fa-brands fa-java"></i>
+                <span>OOP IN JAVA</span>
+            </div>
+            
+            <div class="nav-menu" id="navMenu">
+                <!-- Modules will be injected here by main.js -->
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top section: Explanation & UML -->
+            <section class="glass-panel content-section">
+                <header class="content-header">
+                    <h1 id="moduleTitle">MODULE TITLE</h1>
+                </header>
+                <div class="content-body" id="moduleContent">
+                    <div class="text-content" id="textContent">
+                        <!-- Text explanation goes here -->
+                    </div>
+                    <div class="uml-diagram" id="umlContent">
+                        <!-- Mermaid UML goes here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom section: Code Editor -->
+            <section class="glass-panel code-section">
+                <div class="code-header">
+                    <div class="tab">
+                        <i class="fa-regular fa-file-code"></i> Main.java
+                    </div>
+                    <button class="run-btn" id="runBtn">RUN CODE <i class="fa-solid fa-play"></i></button>
+                </div>
+                <div class="code-body">
+                    <pre><code class="language-java" id="codeEditor"></code></pre>
+                </div>
+                <!-- Console Output (hidden by default, shown when run is clicked) -->
+                <div class="console-output hidden" id="consoleOutput">
+                    <div class="console-header">Console Output <i class="fa-solid fa-xmark close-console" id="closeConsole"></i></div>
+                    <pre><code id="consoleText"></code></pre>
+                </div>
+            </section>
+        </main>
+
+        <!-- Right Sidebar: Quiz -->
+        <aside class="right-sidebar">
+            <div class="glass-panel quiz-panel">
+                <h2 class="quiz-title">TEST KNOWLEDGE</h2>
+                <div class="quiz-container" id="quizContainer">
+                    <!-- Quiz goes here -->
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+        window.mermaid = mermaid;
+    </script>
+    
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
